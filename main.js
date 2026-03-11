@@ -54,11 +54,11 @@ const SHOTS = [
   },
   {
     section: "neural",
-    modelRot: -0.6,
-    from: { x: 3.5, y: 1.2, z: 7.0, fov: 42 },
-    to: { x: 2.0, y: 1.5, z: 5.5, fov: 38 },
-    lookAt: new THREE.Vector3(-1.0, 1.0, 0),
-    light: { key: 0x0088ff, fill: 0x3366ff, ki: 3.2, fi: 1.2 },
+    modelRot: 3.5, // Rotate model to show back
+    from: { x: -4.5, y: -1.0, z: 10.0, fov: 44 }, // Cinematic sweep from the side-back
+    to: { x: -2.0, y: 1.5, z: 7.5, fov: 38 },     // Close up on the back reactor/shoulder area
+    lookAt: new THREE.Vector3(-2.0, 1.2, 0),      // Look at the upper back/shoulder
+    light: { key: 0x0088ff, fill: 0x3366ff, ki: 3.5, fi: 1.5 },
   },
   {
     section: "vortex",
