@@ -143,10 +143,10 @@ loader.load(
 // =============================================================================
 function initSmoothScroll() {
   // Virtual scroll: 0 = top, TOTAL_SECTIONS = bottom (one unit per section)
-  const LOCK_DURATION = 900; // ms to hold at each section snap point
-  const SCROLL_SPEED = 0.0014; // how much one wheel tick moves (tune this)
-  const LERP_NORMAL = 0.07; // smooth factor while scrolling
-  const LERP_LOCKED = 0.12; // slightly faster snap INTO lock position
+  const LOCK_DURATION = 500; // ms to hold at each section snap point
+  const SCROLL_SPEED = 0.0025; // how much one wheel tick moves (tune this)
+  const LERP_NORMAL = 0.12; // smooth factor while scrolling
+  const LERP_LOCKED = 0.18; // slightly faster snap INTO lock position
   const LOCK_THRESHOLD = 0.06; // how close to a snap point before locking
 
   let rawY = 0; // raw accumulated scroll (0 → TOTAL_SECTIONS)
@@ -389,7 +389,7 @@ function animate() {
   idleTime += delta;
 
   // Smooth global progress (extra layer of smoothing on top of GSAP ticker)
-  globalProgress = lerp(globalProgress, targetProgress, 0.055);
+  globalProgress = lerp(globalProgress, targetProgress, 0.12);
 
   // Walk scrub — loop every 3.3s
   if (mixer && walkAction) {
@@ -400,7 +400,7 @@ function animate() {
 
   // Camera
   const cam = getCameraState(globalProgress);
-  const CAM_LERP = 0.042;
+  const CAM_LERP = 0.08;
 
   camPos.x = lerp(camPos.x, cam.x, CAM_LERP);
   camPos.y = lerp(camPos.y, cam.y, CAM_LERP);
