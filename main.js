@@ -21,6 +21,9 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.2;
 
+// ========== ATMOSPHERIC FOG ==========
+scene.fog = new THREE.FogExp2(0x040810, 0.018);
+
 // ========== LIGHTS ==========
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
 scene.add(ambientLight);
@@ -41,8 +44,8 @@ const bottomLight = new THREE.PointLight(0x0044ff, 1);
 bottomLight.position.set(0, -5, 2);
 scene.add(bottomLight);
 
-// ========== CINEMATIC SHOTS ==========
-// 4 shots, each with FROM → TO camera dolly move
+// ========== CINEMATIC SHOTS (CLOCKWISE ORBIT) ==========
+// Kamera bergerak searah jarum jam: Depan → Kanan → Belakang-Kanan → Kiri-Depan
 const SHOTS = [
   {
     section: "hero",
@@ -78,6 +81,72 @@ const SHOTS = [
   },
 ];
 
+// ========== SMOKE PARTICLE SYSTEM ==========
+const PARTICLE_COUNT = 250;
+const smokeGeometry = new THREE.BufferGeometry();
+const smokePositions = new Float32Array(PARTICLE_COUNT * 3);
+const smokeSizes = new Float32Array(PARTICLE_COUNT);
+const smokeOpacities = new Float32Array(PARTICLE_COUNT);
+const smokeLifetimes = new Float32Array(PARTICLE_COUNT); // 0→1 lifecycle
+const smokeSpeeds = new Float32Array(PARTICLE_COUNT);
+
+function initParticle(i) {
+  // Spread around model center (-3, -11, 0) in a wide cylinder
+  const angle = Math.random() * Math.PI * 2;
+  const radius = 1.5 + Math.random() * 10;
+  smokePositions[i * 3] = -3 + Math.cos(angle) * radius;
+  smokePositions[i * 3 + 1] = -11 + Math.random() * 14 - 3; // -14 to +0
+  smokePositions[i * 3 + 2] = Math.sin(angle) * radius;
+
+  smokeSizes[i] = 20 + Math.random() * 50;
+  smokeOpacities[i] = 0.0;
+  smokeLifetimes[i] = Math.random(); // random start phase
+  smokeSpeeds[i] = 0.002 + Math.random() * 0.006;
+}
+
+for (let i = 0; i < PARTICLE_COUNT; i++) {
+  initParticle(i);
+}
+
+smokeGeometry.setAttribute("position", new THREE.BufferAttribute(smokePositions, 3));
+smokeGeometry.setAttribute("aSize", new THREE.BufferAttribute(smokeSizes, 1));
+smokeGeometry.setAttribute("aOpacity", new THREE.BufferAttribute(smokeOpacities, 1));
+
+const smokeVertexShader = `
+  attribute float aSize;
+  attribute float aOpacity;
+  varying float vOpacity;
+  void main() {
+    vOpacity = aOpacity;
+    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+    gl_PointSize = aSize * (300.0 / -mvPosition.z);
+    gl_Position = projectionMatrix * mvPosition;
+  }
+`;
+
+const smokeFragmentShader = `
+  varying float vOpacity;
+  void main() {
+    // Soft circular particle
+    float dist = length(gl_PointCoord - vec2(0.5));
+    if (dist > 0.5) discard;
+    // Soft edge falloff (gaussian-like)
+    float alpha = smoothstep(0.5, 0.05, dist) * vOpacity;
+    gl_FragColor = vec4(0.6, 0.7, 0.8, alpha);
+  }
+`;
+
+const smokeMaterial = new THREE.ShaderMaterial({
+  vertexShader: smokeVertexShader,
+  fragmentShader: smokeFragmentShader,
+  transparent: true,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending,
+});
+
+const smokeParticles = new THREE.Points(smokeGeometry, smokeMaterial);
+scene.add(smokeParticles);
+
 // ========== THREE STATE ==========
 let model, walkAction, mixer;
 const clock = new THREE.Clock();
@@ -90,10 +159,11 @@ const TOTAL_SECTIONS = SHOTS.length; // 4
 let globalProgress = 0; // what render reads (smoothed)
 let targetProgress = 0; // what scroll system writes
 
-const camPos = new THREE.Vector3(0, -0.5, 10.5);
-const camLookAt = new THREE.Vector3(-1.5, 0.5, 0);
+const camPos = new THREE.Vector3(0.5, -1.5, 16.0);
+const camLookAt = new THREE.Vector3(-2.0, 0.5, 0);
 let modelRotCurrent = SHOTS[0].modelRot;
 let idleTime = 0;
+let prevProgress = 0; // for detecting scroll velocity
 
 // ========== LOAD MODEL ==========
 loader.load(
@@ -131,32 +201,20 @@ loader.load(
 );
 
 // ========== SMOOTH SCROLL SYSTEM =============================================
-//
-//  Strategy: hijack native scroll entirely.
-//  - Listen to wheel / touch / keyboard events
-//  - Accumulate "scroll intent" into a raw virtual scroll position (rawY)
-//  - Each section has a "lock zone" — when rawY enters a lock zone we pause
-//    and hold there for LOCK_DURATION ms before releasing
-//  - A GSAP ticker smoothly lerps the displayed progress toward rawY
-//
-//  This gives: buttery smooth inertia + per-section pause + no layout jank
-// =============================================================================
 function initSmoothScroll() {
-  // Virtual scroll: 0 = top, TOTAL_SECTIONS = bottom (one unit per section)
-  const LOCK_DURATION = 500; // ms to hold at each section snap point
-  const SCROLL_SPEED = 0.0025; // how much one wheel tick moves (tune this)
-  const LERP_NORMAL = 0.12; // smooth factor while scrolling
-  const LERP_LOCKED = 0.18; // slightly faster snap INTO lock position
-  const LOCK_THRESHOLD = 0.06; // how close to a snap point before locking
+  const LOCK_DURATION = 500;
+  const SCROLL_SPEED = 0.0025;
+  const LERP_NORMAL = 0.12;
+  const LERP_LOCKED = 0.18;
+  const LOCK_THRESHOLD = 0.06;
 
-  let rawY = 0; // raw accumulated scroll (0 → TOTAL_SECTIONS)
-  let displayY = 0; // smoothed display value (drives render)
-  let isLocked = false; // currently in a lock hold?
-  let lockTarget = 0; // which integer snap point we're locked to
-  let lockTimer = null; // setTimeout handle
+  let rawY = 0;
+  let displayY = 0;
+  let isLocked = false;
+  let lockTarget = 0;
+  let lockTimer = null;
   let touchStartY = 0;
 
-  // Snap points: section boundaries (0, 1, 2, 3) + end (4)
   const snapPoints = [0, 1, 2, 3, 4];
 
   function tryLock(newRaw) {
@@ -165,7 +223,6 @@ function initSmoothScroll() {
     for (const snap of snapPoints) {
       const dist = Math.abs(newRaw - snap);
       if (dist < LOCK_THRESHOLD) {
-        // Snap!
         isLocked = true;
         lockTarget = snap;
         rawY = snap;
@@ -182,7 +239,7 @@ function initSmoothScroll() {
   }
 
   function addDelta(delta) {
-    if (isLocked) return; // swallow input while locked
+    if (isLocked) return;
 
     rawY = Math.max(0, Math.min(TOTAL_SECTIONS, rawY + delta));
     rawY = tryLock(rawY);
@@ -225,7 +282,7 @@ function initSmoothScroll() {
     if (e.key === "ArrowUp" || e.key === "PageUp") addDelta(-0.25);
   });
 
-  // --- Navigate to a section (from dots or nav links) ---
+  // --- Navigate to a section ---
   window.gotoSection = function (idx) {
     isLocked = false;
     clearTimeout(lockTimer);
@@ -240,26 +297,22 @@ function initSmoothScroll() {
     });
   });
 
-  // --- GSAP ticker: smooth display toward rawY ---
+  // --- GSAP ticker ---
   gsap.ticker.add(() => {
     const lerpF = isLocked ? LERP_LOCKED : LERP_NORMAL;
     displayY = lerp(displayY, rawY, lerpF);
 
-    // Clamp and push to render system
     const clamped = Math.max(0, Math.min(TOTAL_SECTIONS, displayY));
     targetProgress = clamped / TOTAL_SECTIONS;
 
-    // Update scroll progress bar
     const bar = document.getElementById("scroll-progress");
     if (bar) bar.style.width = `${(clamped / TOTAL_SECTIONS) * 100}%`;
 
-    // Update section dots
     const activeIdx = Math.round(Math.min(clamped, TOTAL_SECTIONS - 1));
     document.querySelectorAll("#section-dots .dot").forEach((dot, i) => {
       dot.classList.toggle("active", i === activeIdx);
     });
 
-    // Section content visibility
     updateSectionVisibility(clamped);
   });
 
@@ -268,10 +321,9 @@ function initSmoothScroll() {
     document.getElementById("hero-content")?.classList.add("visible");
   }, 800);
 
-  // Stat counters — trigger once when section becomes visible
+  // Stat counters
   const countersDone = new Set();
   function updateSectionVisibility(y) {
-    // Active section index: whichever integer bucket y falls in
     const activeSection = Math.min(Math.floor(y + 0.15), TOTAL_SECTIONS - 1);
 
     document.querySelectorAll("section").forEach((sec, i) => {
@@ -284,7 +336,6 @@ function initSmoothScroll() {
       }
     });
 
-    // Counters — fire once per section when it becomes active
     document.querySelectorAll(".stat-value[data-count]").forEach((el) => {
       const secIdx = parseInt(
         el.closest("section")?.dataset?.sectionIndex ?? "-1",
@@ -297,20 +348,18 @@ function initSmoothScroll() {
   }
 }
 
-// ========== CAMERA MATH =====================================================
+// ========== CAMERA MATH (CINEMATIC) =========================================
 function getCameraState(progress) {
-  // progress: 0 → 1 over whole page
-  // map to shot float: 0 → 4
   const shotFloat = progress * TOTAL_SECTIONS;
   const idxA = Math.min(Math.floor(shotFloat), SHOTS.length - 1);
   const idxB = Math.min(idxA + 1, SHOTS.length - 1);
-  const blend = smoothstep(shotFloat - idxA); // 0→1 between shots
+  const blend = quinticSmooth(Math.max(0, Math.min(1, shotFloat - idxA)));
 
   const shotA = SHOTS[idxA];
   const shotB = SHOTS[idxB];
 
-  // Within-shot section progress (0→1), eased
-  const sectionT = easeInOut(shotFloat % 1);
+  // Within-shot eased progress
+  const sectionT = quinticEaseInOut(shotFloat % 1);
 
   function dolly(shot) {
     return {
@@ -366,19 +415,78 @@ window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// ========== MATH UTILS ==========
+// ========== MATH UTILS (CINEMATIC EASING) ==========
 function lerp(a, b, t) {
   return a + (b - a) * t;
 }
-function smoothstep(t) {
+
+// Quintic smoothstep — much smoother than cubic
+function quinticSmooth(t) {
   t = Math.max(0, Math.min(1, t));
-  return t * t * (3 - 2 * t);
+  return t * t * t * (t * (t * 6 - 15) + 10);
 }
-function easeInOut(t) {
-  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+// Quintic ease-in-out — ultra smooth transitions
+function quinticEaseInOut(t) {
+  t = Math.max(0, Math.min(1, t));
+  if (t < 0.5) {
+    return 16 * t * t * t * t * t;
+  }
+  const f = 2 * t - 2;
+  return 0.5 * f * f * f * f * f + 1;
 }
+
 function lerpColor(hexA, hexB, t) {
   return new THREE.Color(hexA).lerp(new THREE.Color(hexB), t);
+}
+
+// ========== SMOKE PARTICLE UPDATE ==========
+function updateSmokeParticles(delta, scrollVelocity) {
+  const positions = smokeGeometry.attributes.position.array;
+  const opacities = smokeGeometry.attributes.aOpacity.array;
+  const sizes = smokeGeometry.attributes.aSize.array;
+
+  // Boost particle visibility during transitions
+  const velocityBoost = Math.min(Math.abs(scrollVelocity) * 8, 1.0);
+
+  for (let i = 0; i < PARTICLE_COUNT; i++) {
+    // Advance lifetime
+    smokeLifetimes[i] += smokeSpeeds[i];
+
+    if (smokeLifetimes[i] > 1.0) {
+      // Reset particle
+      initParticle(i);
+      smokeLifetimes[i] = 0;
+    }
+
+    const life = smokeLifetimes[i];
+
+    // Fade in (0→0.15), sustain (0.15→0.7), fade out (0.7→1.0)
+    let opacity;
+    if (life < 0.15) {
+      opacity = quinticSmooth(life / 0.15);
+    } else if (life < 0.7) {
+      opacity = 1.0;
+    } else {
+      opacity = 1.0 - quinticSmooth((life - 0.7) / 0.3);
+    }
+
+    // Thicker smoke for cinematic feel + extra boost during scroll
+    const baseOpacity = 0.06 + velocityBoost * 0.1;
+    opacities[i] = opacity * baseOpacity;
+
+    // Slow drift upward + subtle horizontal sway
+    positions[i * 3 + 1] += delta * (0.15 + smokeSpeeds[i] * 15); // up
+    positions[i * 3] += Math.sin(idleTime * 0.3 + i * 0.5) * delta * 0.08; // sway X
+    positions[i * 3 + 2] += Math.cos(idleTime * 0.2 + i * 0.7) * delta * 0.06; // sway Z
+
+    // Grow slightly over lifetime
+    sizes[i] = smokeSizes[i] * (0.6 + life * 0.6);
+  }
+
+  smokeGeometry.attributes.position.needsUpdate = true;
+  smokeGeometry.attributes.aOpacity.needsUpdate = true;
+  smokeGeometry.attributes.aSize.needsUpdate = true;
 }
 
 // ========== RENDER LOOP ==========
@@ -388,33 +496,43 @@ function animate() {
   const delta = clock.getDelta();
   idleTime += delta;
 
-  // Smooth global progress (extra layer of smoothing on top of GSAP ticker)
-  globalProgress = lerp(globalProgress, targetProgress, 0.12);
+  // Smooth global progress — lower lerp for ultra-smooth cinematic feel
+  globalProgress = lerp(globalProgress, targetProgress, 0.065);
 
-  // Walk scrub — loop every 3.3s
+  // Calculate scroll velocity for particle boost
+  const scrollVelocity = globalProgress - prevProgress;
+  prevProgress = globalProgress;
+
+  // Walk scrub
   if (mixer && walkAction) {
     walkAction.time =
       (globalProgress * TOTAL_SECTIONS * WALK_DURATION) % WALK_DURATION;
     mixer.update(0);
   }
 
-  // Camera
+  // Camera — cinematic smooth
   const cam = getCameraState(globalProgress);
-  const CAM_LERP = 0.08;
+  const CAM_LERP = 0.045; // slower = smoother
 
-  camPos.x = lerp(camPos.x, cam.x, CAM_LERP);
-  camPos.y = lerp(camPos.y, cam.y, CAM_LERP);
+  // Cinematic camera sway (handheld feel)
+  const swayX = Math.sin(idleTime * 0.4) * 0.03 + Math.sin(idleTime * 0.7) * 0.015;
+  const swayY = Math.cos(idleTime * 0.3) * 0.025 + Math.sin(idleTime * 0.55) * 0.01;
+
+  camPos.x = lerp(camPos.x, cam.x + swayX, CAM_LERP);
+  camPos.y = lerp(camPos.y, cam.y + swayY, CAM_LERP);
   camPos.z = lerp(camPos.z, cam.z, CAM_LERP);
 
-  camLookAt.lerp(cam.lookAt, CAM_LERP);
+  camLookAt.lerp(cam.lookAt, CAM_LERP * 0.8);
 
-  camera.fov = lerp(camera.fov, cam.fov, CAM_LERP * 0.5);
+  // FOV breathing — subtle pulsing for cinematic depth
+  const fovBreath = Math.sin(idleTime * 0.25) * 0.3;
+  camera.fov = lerp(camera.fov, cam.fov + fovBreath, CAM_LERP * 0.4);
   camera.updateProjectionMatrix();
   camera.position.copy(camPos);
   camera.lookAt(camLookAt);
 
-  // Model rotation
-  modelRotCurrent = lerp(modelRotCurrent, cam.modelRot, 0.038);
+  // Model rotation — smooth clockwise
+  modelRotCurrent = lerp(modelRotCurrent, cam.modelRot, 0.03);
 
   if (model) {
     const breathY = Math.sin(idleTime * 1.1) * 0.015;
@@ -430,6 +548,9 @@ function animate() {
   keyLight.color.lerp(cam.light.key, ML);
   fillLight.intensity = lerp(fillLight.intensity, cam.light.fi, ML);
   fillLight.color.lerp(cam.light.fill, ML);
+
+  // Update smoke particles
+  updateSmokeParticles(delta, scrollVelocity);
 
   renderer.render(scene, camera);
 }
