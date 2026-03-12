@@ -5,17 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ASTRAEUS PRIME — Digital Mecha Experience</title>
     <link rel="icon" type="image/png" href="favicon.png" />
-    <meta
-      name="description"
-      content="Experience the next-generation tactical Jaeger interface. ASTRAEUS PRIME — a cinematic 3D journey into advanced mecha engineering by DapCodes."
-    />
+    <meta name="description" content="Next-generation tactical Jaeger interface. ASTRAEUS PRIME — a cinematic 3D experience by DapCodes." />
     <link rel="stylesheet" href="index.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600;800;900&family=Inter:wght@300;400;500;600&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600;800;900&display=swap" rel="stylesheet" />
     <script type="importmap">
       {
         "imports": {
@@ -28,36 +22,24 @@
   <body>
     <canvas id="canvas3d"></canvas>
 
-    <!-- HUD Overlay Layer -->
+    <!-- HUD Overlay -->
     <div id="hud-overlay">
       <div class="hud-scanlines"></div>
-      <div class="hud-corner hud-corner-tl"></div>
-      <div class="hud-corner hud-corner-tr"></div>
-      <div class="hud-corner hud-corner-bl"></div>
-      <div class="hud-corner hud-corner-br"></div>
-      <div class="hud-ticker">
-        <span>SYS.ONLINE</span>
-        <span class="ticker-sep">◆</span>
-        <span>DRIFT.READY</span>
-        <span class="ticker-sep">◆</span>
-        <span>SYNC.99.7%</span>
-        <span class="ticker-sep">◆</span>
-        <span>TACTICAL.MODE</span>
-        <span class="ticker-sep">◆</span>
-        <span>CORE.STABLE</span>
-      </div>
+      <div class="hud-corner hud-tl"></div>
+      <div class="hud-corner hud-tr"></div>
+      <div class="hud-corner hud-bl"></div>
+      <div class="hud-corner hud-br"></div>
     </div>
 
-    <!-- Loading screen -->
+    <!-- Loader -->
     <div id="loader">
       <div class="loader-inner">
         <div class="loader-ring"></div>
-        <p>INITIALIZING JAEGER SYSTEMS</p>
-        <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+        <p>INITIALIZING JAEGER</p>
       </div>
     </div>
 
-    <!-- Navigation -->
+    <!-- Nav -->
     <nav id="navbar">
       <div class="nav-brand">
         <span class="nav-icon">⌬</span>
@@ -73,92 +55,61 @@
         <a href="#" data-goto="6">PILOTS</a>
         <a href="#" data-goto="7">DEPLOY</a>
       </div>
-      <div class="nav-status">
-        <div class="nav-status-dot"></div>
-        <span>LIVE</span>
-      </div>
+      <div class="nav-live"><div class="nav-live-dot"></div>LIVE</div>
     </nav>
 
-    <!-- Scroll progress bar -->
+    <!-- Scroll progress -->
     <div id="scroll-progress"></div>
 
     <main>
-      <!-- ===== Section 1: Cinematic Hero ===== -->
+      <!-- 01: HERO -->
       <section id="hero" data-section-index="0">
         <div class="section-bg hero-bg"></div>
         <div class="section-layout">
           <div class="model-space"></div>
           <div class="content-side">
             <div class="content" id="hero-content">
-              <span class="section-number">01</span>
-              <div class="tag">HEXA-CORE TACTICAL INTERFACE</div>
-              <h1 class="hollow-text" data-text="ASTRAEUS PRIME">ASTRAEUS<br />PRIME</h1>
-              <p class="hero-sub">
-                A masterpiece of advanced engineering and neural synthesis,
-                architected by <strong>DapCodes</strong>. The ultimate weapon
-                against extinction-level threats.
-              </p>
-              <div class="scroll-hint">
-                <div class="scroll-line"></div>
-                <span class="scramble-text" data-final="INITIATE SYSTEM BOOT">INITIATE SYSTEM BOOT</span>
+              <div class="tag">HEXA-CORE TACTICAL</div>
+              <h1 class="hero-title" data-text="ASTRAEUS PRIME">ASTRAEUS<br/>PRIME</h1>
+              <p>Advanced neural synthesis engineered by <strong>DapCodes</strong>.</p>
+              <div class="scroll-cue">
+                <div class="scroll-cue-line"></div>
+                <span>SCROLL TO EXPLORE</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ===== Section 2: Core Specs (Bento Grid) ===== -->
+      <!-- 02: SPECS -->
       <section id="specs" data-section-index="1">
         <div class="section-bg specs-bg"></div>
-        <div class="section-layout section-layout--full">
-          <div class="model-space model-space--narrow"></div>
+        <div class="section-layout">
+          <div class="model-space"></div>
           <div class="content-side content-side--wide">
             <div class="content" id="specs-content">
-              <span class="section-number">02</span>
-              <div class="stat-tag">SYSTEM DIAGNOSTICS</div>
-              <h2 class="scramble-text" data-final="CORE SPECIFICATIONS">CORE<br/>SPECIFICATIONS</h2>
-              <div class="bento-grid">
-                <div class="bento-card bento-card--large">
-                  <div class="bento-icon">⚡</div>
-                  <div class="bento-label">FORCE OUTPUT</div>
-                  <div class="bento-value" data-count="2400">0</div>
-                  <div class="bento-unit">METRIC TONS</div>
-                  <div class="progress-bar"><div class="progress-fill" data-width="92"></div></div>
+              <div class="stat-tag">DIAGNOSTICS</div>
+              <h2>CORE SPECS</h2>
+              <div class="bento">
+                <div class="bento-card">
+                  <span class="bento-label">FORCE</span>
+                  <span class="bento-val" data-count="2400">0</span>
+                  <div class="bar"><div class="bar-fill" data-w="92"></div></div>
                 </div>
                 <div class="bento-card">
-                  <div class="bento-icon">◈</div>
-                  <div class="bento-label">MAX SPEED</div>
-                  <div class="bento-value" data-count="180">0</div>
-                  <div class="bento-unit">KM/H</div>
-                  <div class="progress-bar"><div class="progress-fill" data-width="78"></div></div>
+                  <span class="bento-label">SPEED</span>
+                  <span class="bento-val" data-count="180">0</span>
+                  <div class="bar"><div class="bar-fill" data-w="78"></div></div>
                 </div>
                 <div class="bento-card">
-                  <div class="bento-icon">◉</div>
-                  <div class="bento-label">DURABILITY</div>
-                  <div class="bento-value" data-count="98.7">0</div>
-                  <div class="bento-unit">PERCENT</div>
-                  <div class="progress-bar"><div class="progress-fill" data-width="98"></div></div>
+                  <span class="bento-label">ARMOR</span>
+                  <span class="bento-val" data-count="98">0</span>
+                  <div class="bar"><div class="bar-fill" data-w="98"></div></div>
                 </div>
                 <div class="bento-card">
-                  <div class="bento-icon">◫</div>
-                  <div class="bento-label">RANGE</div>
-                  <div class="bento-value" data-count="4200">0</div>
-                  <div class="bento-unit">NAUTICAL MI</div>
-                  <div class="progress-bar"><div class="progress-fill" data-width="85"></div></div>
-                </div>
-                <div class="bento-card">
-                  <div class="bento-icon">⬡</div>
-                  <div class="bento-label">AI CORE</div>
-                  <div class="bento-value">GEN-7</div>
-                  <div class="bento-unit">QUANTUM</div>
-                  <div class="progress-bar"><div class="progress-fill" data-width="100"></div></div>
-                </div>
-                <div class="bento-card">
-                  <div class="bento-icon">◎</div>
-                  <div class="bento-label">SHIELD</div>
-                  <div class="bento-value" data-count="12">0</div>
-                  <div class="bento-unit">TERAJOULES</div>
-                  <div class="progress-bar"><div class="progress-fill" data-width="88"></div></div>
+                  <span class="bento-label">RANGE</span>
+                  <span class="bento-val" data-count="4200">0</span>
+                  <div class="bar"><div class="bar-fill" data-w="85"></div></div>
                 </div>
               </div>
             </div>
@@ -166,106 +117,54 @@
         </div>
       </section>
 
-      <!-- ===== Section 3: Neural Link ===== -->
+      <!-- 03: NEURAL -->
       <section id="neural" data-section-index="2">
         <div class="section-bg neural-bg"></div>
         <div class="section-layout">
           <div class="model-space"></div>
           <div class="content-side">
             <div class="content" id="neural-content">
-              <span class="section-number">03</span>
-              <div class="accent-line"></div>
-              <div class="stat-tag">SYNAPSE CORE — DEEP DIVE</div>
-              <h2>NEURAL<br />OVERLAY</h2>
-              <p>
-                Advanced bio-digital integration. The ASTRAEUS core utilizes
-                quantum-entangled neural links for zero-latency response.
-                Dual-pilot drift compatibility at 99.9%.
-              </p>
-              <div class="neural-paths">
-                <div class="neural-path-item">
-                  <div class="neural-dot active"></div>
-                  <span>LEFT HEMISPHERE</span>
-                  <span class="neural-status">SYNCED</span>
-                </div>
-                <div class="neural-path-item">
-                  <div class="neural-dot active"></div>
-                  <span>RIGHT HEMISPHERE</span>
-                  <span class="neural-status">SYNCED</span>
-                </div>
-                <div class="neural-path-item">
-                  <div class="neural-dot active"></div>
-                  <span>MOTOR CORTEX</span>
-                  <span class="neural-status">ACTIVE</span>
-                </div>
-                <div class="neural-path-item">
-                  <div class="neural-dot"></div>
-                  <span>COMBAT OVERRIDE</span>
-                  <span class="neural-status standby">STANDBY</span>
-                </div>
-              </div>
-              <div class="stats">
-                <div class="stat-item">
-                  <span class="stat-value" data-count="99.9">0</span>
-                  <span class="stat-label">Neural Sync Rate</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-value" data-count="0.1">0</span>
-                  <span class="stat-label">Ping Latency (ms)</span>
-                </div>
+              <div class="stat-tag">SYNAPSE CORE</div>
+              <h2>NEURAL<br/>LINK</h2>
+              <p>Quantum-entangled neural links. Zero-latency response.</p>
+              <div class="stats-row">
+                <div class="stat"><span class="stat-num" data-count="99.9">0</span><span class="stat-lbl">SYNC %</span></div>
+                <div class="stat"><span class="stat-num" data-count="0.1">0</span><span class="stat-lbl">LATENCY</span></div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ===== Section 4: Arsenal & Weaponry ===== -->
+      <!-- 04: ARSENAL -->
       <section id="arsenal" data-section-index="3">
         <div class="section-bg arsenal-bg"></div>
         <div class="section-layout">
           <div class="model-space"></div>
           <div class="content-side">
             <div class="content" id="arsenal-content">
-              <span class="section-number">04</span>
-              <div class="accent-line orange"></div>
               <div class="stat-tag orange">WEAPONS ARRAY</div>
-              <h2 class="orange-text">ARSENAL &<br/>WEAPONRY</h2>
-              <p>
-                Select a weapon system to view detailed combat specifications.
-                Each armament is optimized for maximum Kaiju neutralization.
-              </p>
-              <div class="weapon-hotspots">
-                <button class="hotspot-btn active" data-weapon="plasma">
-                  <div class="hotspot-pulse"></div>
-                  <span>I-19 PLASMACASTER</span>
+              <h2 class="orange-text">ARSENAL</h2>
+              <div class="weapon-btns">
+                <button class="weapon-btn active" data-weapon="plasma" data-anim="Gipsy.Combat Punch1">
+                  <div class="weapon-dot"></div>I-19 PLASMACASTER
                 </button>
-                <button class="hotspot-btn" data-weapon="sword">
-                  <div class="hotspot-pulse"></div>
-                  <span>GD-6 CHAIN SWORD</span>
+                <button class="weapon-btn" data-weapon="sword" data-anim="Gipsy.Combat Heavy Attack">
+                  <div class="weapon-dot"></div>GD-6 CHAIN SWORD
                 </button>
-                <button class="hotspot-btn" data-weapon="missile">
-                  <div class="hotspot-pulse"></div>
-                  <span>ANTI-KAIJU MISSILES</span>
+                <button class="weapon-btn" data-weapon="missile" data-anim="Gipsy.Combat Punch3">
+                  <div class="weapon-dot"></div>ANTI-KAIJU MISSILES
                 </button>
               </div>
-              <div class="weapon-detail glass-panel" id="weapon-detail">
-                <div class="weapon-detail-header">
-                  <span class="weapon-name">I-19 PLASMACASTER</span>
-                  <span class="weapon-class">CLASS-A</span>
+              <div class="weapon-info glass" id="weapon-info">
+                <div class="weapon-info-head">
+                  <span id="w-name">I-19 PLASMACASTER</span>
+                  <span class="weapon-class" id="w-class">CLASS-A</span>
                 </div>
-                <div class="weapon-stats-grid">
-                  <div class="weapon-stat">
-                    <span class="weapon-stat-label">DAMAGE</span>
-                    <div class="progress-bar"><div class="progress-fill orange-fill" data-width="95"></div></div>
-                  </div>
-                  <div class="weapon-stat">
-                    <span class="weapon-stat-label">FIRE RATE</span>
-                    <div class="progress-bar"><div class="progress-fill orange-fill" data-width="60"></div></div>
-                  </div>
-                  <div class="weapon-stat">
-                    <span class="weapon-stat-label">RANGE</span>
-                    <div class="progress-bar"><div class="progress-fill orange-fill" data-width="82"></div></div>
-                  </div>
+                <div class="weapon-bars">
+                  <div class="weapon-bar-row"><span>DMG</span><div class="bar"><div class="bar-fill orange-bar" id="w-dmg" style="width:95%"></div></div></div>
+                  <div class="weapon-bar-row"><span>RATE</span><div class="bar"><div class="bar-fill orange-bar" id="w-rate" style="width:60%"></div></div></div>
+                  <div class="weapon-bar-row"><span>RNG</span><div class="bar"><div class="bar-fill orange-bar" id="w-rng" style="width:82%"></div></div></div>
                 </div>
               </div>
             </div>
@@ -273,44 +172,23 @@
         </div>
       </section>
 
-      <!-- ===== Section 5: Global Deployment Map ===== -->
-      <section id="deployment-map" data-section-index="4">
+      <!-- 05: MAP -->
+      <section id="deploy-map" data-section-index="4">
         <div class="section-bg map-bg"></div>
-        <div class="section-layout section-layout--full">
-          <div class="model-space model-space--narrow"></div>
+        <div class="section-layout">
+          <div class="model-space"></div>
           <div class="content-side content-side--wide">
             <div class="content" id="map-content">
-              <span class="section-number">05</span>
-              <div class="stat-tag green">GLOBAL OPERATIONS</div>
-              <h2 class="green-text">DEPLOYMENT<br/>ZONES</h2>
-              <p>Active Jaeger coverage zones across the Pacific Rim. Real-time threat monitoring enabled.</p>
-              <div class="deploy-map-container glass-panel">
+              <div class="stat-tag green">GLOBAL OPS</div>
+              <h2 class="green-text">DEPLOY<br/>ZONES</h2>
+              <div class="map-box glass">
                 <div class="map-grid">
-                  <div class="map-point" style="top:25%;left:70%;" data-label="HONG KONG">
-                    <div class="map-ping"></div>
-                  </div>
-                  <div class="map-point" style="top:35%;left:82%;" data-label="TOKYO">
-                    <div class="map-ping"></div>
-                  </div>
-                  <div class="map-point" style="top:60%;left:85%;" data-label="SYDNEY">
-                    <div class="map-ping"></div>
-                  </div>
-                  <div class="map-point" style="top:30%;left:20%;" data-label="ANCHORAGE">
-                    <div class="map-ping"></div>
-                  </div>
-                  <div class="map-point active" style="top:45%;left:50%;" data-label="BREACH POINT">
-                    <div class="map-ping"></div>
-                  </div>
-                  <div class="map-point" style="top:50%;left:30%;" data-label="LIMA">
-                    <div class="map-ping"></div>
-                  </div>
-                  <div class="map-point" style="top:20%;left:55%;" data-label="VLADIVOSTOK">
-                    <div class="map-ping"></div>
-                  </div>
-                </div>
-                <div class="map-legend">
-                  <div class="map-legend-item"><div class="legend-dot active"></div><span>ACTIVE ZONE</span></div>
-                  <div class="map-legend-item"><div class="legend-dot"></div><span>SHATTERDOME</span></div>
+                  <div class="map-dot" style="top:25%;left:70%" data-city="HONG KONG"><div class="map-ping"></div></div>
+                  <div class="map-dot" style="top:35%;left:82%" data-city="TOKYO"><div class="map-ping"></div></div>
+                  <div class="map-dot" style="top:60%;left:85%" data-city="SYDNEY"><div class="map-ping"></div></div>
+                  <div class="map-dot" style="top:30%;left:20%" data-city="ANCHORAGE"><div class="map-ping"></div></div>
+                  <div class="map-dot breach" style="top:45%;left:50%" data-city="BREACH"><div class="map-ping"></div></div>
+                  <div class="map-dot" style="top:50%;left:30%" data-city="LIMA"><div class="map-ping"></div></div>
                 </div>
               </div>
             </div>
@@ -318,89 +196,43 @@
         </div>
       </section>
 
-      <!-- ===== Section 6: Technology Stack ===== -->
-      <section id="tech-stack" data-section-index="5">
+      <!-- 06: TECH -->
+      <section id="tech" data-section-index="5">
         <div class="section-bg tech-bg"></div>
-        <div class="section-layout section-layout--full">
-          <div class="model-space model-space--narrow"></div>
+        <div class="section-layout">
+          <div class="model-space"></div>
           <div class="content-side content-side--wide">
             <div class="content" id="tech-content">
-              <span class="section-number">06</span>
               <div class="stat-tag">ENGINE SYSTEMS</div>
-              <h2>TECHNOLOGY<br/>STACK</h2>
-              <div class="tech-cards">
-                <div class="tech-card glass-panel">
-                  <div class="tech-card-icon cyan-glow">⬡</div>
-                  <div class="tech-card-body">
-                    <h3>AI CORE</h3>
-                    <p>7th-gen quantum neural processor. Self-learning combat algorithms with predictive threat modeling.</p>
-                  </div>
-                  <div class="tech-card-version">v7.2.1</div>
-                </div>
-                <div class="tech-card glass-panel">
-                  <div class="tech-card-icon orange-glow">◈</div>
-                  <div class="tech-card-body">
-                    <h3>PLASMA DRIVE</h3>
-                    <p>12-stage ion propulsion. Near-infinite torque stabilized by hex-shield cooling array.</p>
-                  </div>
-                  <div class="tech-card-version">v4.8.0</div>
-                </div>
-                <div class="tech-card glass-panel">
-                  <div class="tech-card-icon green-glow">◎</div>
-                  <div class="tech-card-body">
-                    <h3>QUANTUM SHIELD</h3>
-                    <p>Multi-layer energy barrier with adaptive frequency modulation. 12 TJ absorption capacity.</p>
-                  </div>
-                  <div class="tech-card-version">v3.1.4</div>
-                </div>
-                <div class="tech-card glass-panel">
-                  <div class="tech-card-icon cyan-glow">⌬</div>
-                  <div class="tech-card-body">
-                    <h3>NEURAL BRIDGE</h3>
-                    <p>Dual-pilot drift interface with zero-latency synaptic relay. Full motor-cortex integration.</p>
-                  </div>
-                  <div class="tech-card-version">v9.0.3</div>
-                </div>
+              <h2>TECH<br/>STACK</h2>
+              <div class="tech-grid">
+                <div class="tech-card glass"><div class="tc-icon cyan">⬡</div><h3>AI CORE</h3><p>7th-gen quantum neural processor.</p></div>
+                <div class="tech-card glass"><div class="tc-icon orange-i">◈</div><h3>PLASMA DRIVE</h3><p>12-stage ion propulsion system.</p></div>
+                <div class="tech-card glass"><div class="tc-icon green-i">◎</div><h3>Q-SHIELD</h3><p>12 TJ adaptive energy barrier.</p></div>
+                <div class="tech-card glass"><div class="tc-icon cyan">⌬</div><h3>NEURAL BRIDGE</h3><p>Zero-latency drift interface.</p></div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- ===== Section 7: Pilot Interface ===== -->
+      <!-- 07: PILOTS -->
       <section id="pilots" data-section-index="6">
         <div class="section-bg pilots-bg"></div>
         <div class="section-layout">
           <div class="model-space"></div>
           <div class="content-side">
             <div class="content" id="pilots-content">
-              <span class="section-number">07</span>
-              <div class="accent-line"></div>
-              <div class="stat-tag">OPERATOR PROFILES</div>
+              <div class="stat-tag">OPERATORS</div>
               <h2>PILOT<br/>INTERFACE</h2>
-              <p>Drift-compatible operators vetted through the Jaeger Academy's elite program.</p>
-              <div class="pilot-cards">
-                <div class="pilot-card glass-panel">
-                  <div class="pilot-avatar">
-                    <div class="pilot-avatar-placeholder"></div>
-                    <div class="pilot-hud-badge">RANGER</div>
-                  </div>
-                  <div class="pilot-info">
-                    <h4>PILOT — ALPHA</h4>
-                    <span class="pilot-role">LEFT HEMISPHERE</span>
-                    <div class="pilot-drift">DRIFT: <strong>97.3%</strong></div>
-                  </div>
+              <div class="pilot-row">
+                <div class="pilot glass">
+                  <div class="pilot-av"></div>
+                  <div class="pilot-info"><h4>PILOT ALPHA</h4><span>LEFT HEMI · DRIFT 97.3%</span></div>
                 </div>
-                <div class="pilot-card glass-panel">
-                  <div class="pilot-avatar">
-                    <div class="pilot-avatar-placeholder"></div>
-                    <div class="pilot-hud-badge">RANGER</div>
-                  </div>
-                  <div class="pilot-info">
-                    <h4>PILOT — BRAVO</h4>
-                    <span class="pilot-role">RIGHT HEMISPHERE</span>
-                    <div class="pilot-drift">DRIFT: <strong>96.8%</strong></div>
-                  </div>
+                <div class="pilot glass">
+                  <div class="pilot-av"></div>
+                  <div class="pilot-info"><h4>PILOT BRAVO</h4><span>RIGHT HEMI · DRIFT 96.8%</span></div>
                 </div>
               </div>
             </div>
@@ -408,45 +240,23 @@
         </div>
       </section>
 
-      <!-- ===== Section 8: Final Deployment (CTA) ===== -->
+      <!-- 08: CTA -->
       <section id="cta" data-section-index="7">
         <div class="section-bg cta-bg"></div>
         <div class="section-layout section-layout--center">
           <div class="content content--center" id="cta-content">
-            <span class="section-number section-number--large">08</span>
             <div class="stat-tag green">SYSTEMS PRIMED</div>
-            <h2 class="cta-heading green-text">READY FOR<br/>DEPLOYMENT</h2>
-            <p class="cta-sub">
-              All neural pathways authenticated. Tactical superiority confirmed.
-              ASTRAEUS PRIME is primed and awaiting your command.
-            </p>
-            <div class="deploy-status">
-              <div class="status-dot active"></div>
-              <span>ALL SYSTEMS ONLINE</span>
-            </div>
-            <button class="cta-button magnetic-btn" id="cta-btn">
-              <span class="cta-btn-text">ENTER THE DRIFT</span>
-              <div class="cta-btn-glow"></div>
-            </button>
+            <h2 class="cta-title green-text">ENTER THE<br/>DRIFT</h2>
+            <div class="deploy-bar"><div class="status-dot"></div><span>ALL SYSTEMS ONLINE</span></div>
+            <button class="cta-btn" id="cta-btn" data-anim="Gipsy.Emote1">DEPLOY NOW</button>
             <div class="cta-footer">
-              <div class="footer-grid">
-                <div class="footer-item">
-                  <span class="footer-label">DESIGNED BY</span>
-                  <span class="footer-value">DAPCODES</span>
-                </div>
-                <div class="footer-item">
-                  <span class="footer-label">JAEGER PROGRAM</span>
-                  <span class="footer-value">MARK-V</span>
-                </div>
-                <div class="footer-item">
-                  <span class="footer-label">STATUS</span>
-                  <span class="footer-value live">OPERATIONAL</span>
-                </div>
+              <div class="footer-row">
+                <span>DAPCODES</span>
+                <span>MARK-V</span>
+                <span class="live-txt">OPERATIONAL</span>
               </div>
-              <div class="footer-social">
-                <a href="#" class="social-link">GITHUB</a>
-                <a href="#" class="social-link">TWITTER</a>
-                <a href="#" class="social-link">DISCORD</a>
+              <div class="footer-links">
+                <a href="#">GITHUB</a><a href="#">TWITTER</a><a href="#">DISCORD</a>
               </div>
             </div>
           </div>
@@ -454,8 +264,8 @@
       </section>
     </main>
 
-    <!-- Section indicator dots -->
-    <div id="section-dots">
+    <!-- Dots -->
+    <div id="dots">
       <div class="dot active" data-goto="0"></div>
       <div class="dot" data-goto="1"></div>
       <div class="dot" data-goto="2"></div>
@@ -466,7 +276,6 @@
       <div class="dot" data-goto="7"></div>
     </div>
 
-    <!-- GSAP core -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script type="module" src="main.js"></script>
   </body>
