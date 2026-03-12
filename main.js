@@ -1,7 +1,9 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
-// ========== SETUP ==========
+// ================================================================
+//  SETUP
+// ================================================================
 const canvas = document.querySelector("#canvas3d");
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -19,13 +21,17 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
+renderer.toneMappingExposure = 1.3;
 
-// ========== ATMOSPHERIC FOG ==========
-scene.fog = new THREE.FogExp2(0x040810, 0.018);
+// ================================================================
+//  ATMOSPHERIC FOG
+// ================================================================
+scene.fog = new THREE.FogExp2(0x040810, 0.015);
 
-// ========== LIGHTS ==========
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+// ================================================================
+//  LIGHTS
+// ================================================================
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
 scene.add(ambientLight);
 
 const keyLight = new THREE.DirectionalLight(0x00d4ff, 2.5);
@@ -40,68 +46,153 @@ const rimLight = new THREE.DirectionalLight(0x00ccff, 1.5);
 rimLight.position.set(0, 3, -5);
 scene.add(rimLight);
 
-const bottomLight = new THREE.PointLight(0x0044ff, 1);
+const bottomLight = new THREE.PointLight(0x0044ff, 0.8);
 bottomLight.position.set(0, -5, 2);
 scene.add(bottomLight);
 
-// ========== CINEMATIC SHOTS (CLOCKWISE ORBIT) ==========
-// Kamera bergerak searah jarum jam: Depan → Kanan → Belakang-Kanan → Kiri-Depan
+// Volumetric "God Ray" spotlight
+const godRayLight = new THREE.SpotLight(0x00d4ff, 3, 30, Math.PI * 0.15, 0.8, 1.5);
+godRayLight.position.set(2, 15, 4);
+godRayLight.target.position.set(-3, -5, 0);
+scene.add(godRayLight);
+scene.add(godRayLight.target);
+
+// Volumetric cone mesh (fake god ray)
+const coneGeo = new THREE.CylinderGeometry(0.5, 4, 20, 16, 1, true);
+const coneMat = new THREE.MeshBasicMaterial({
+  color: 0x00d4ff,
+  transparent: true,
+  opacity: 0.015,
+  side: THREE.DoubleSide,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+});
+const godRayCone = new THREE.Mesh(coneGeo, coneMat);
+godRayCone.position.set(2, 5, 4);
+godRayCone.rotation.x = Math.PI * 0.05;
+godRayCone.rotation.z = -Math.PI * 0.02;
+scene.add(godRayCone);
+
+// ================================================================
+//  CINEMATIC SHOTS — 8 Sections
+// ================================================================
 const SHOTS = [
   {
+    // Section 0: Hero — Wide establishing shot, silhouette mood
     section: "hero",
     modelRot: 0.25,
-    from: { x: 0.0, y: -0.5, z: 10.5, fov: 48 },
-    to: { x: 0.0, y: 2.0, z: 9.0, fov: 44 },
+    from: { x: 0.0, y: -0.5, z: 11.0, fov: 48 },
+    to:   { x: 0.0, y: 2.0, z: 9.0, fov: 44 },
     lookAt: new THREE.Vector3(-1.5, 0.5, 0),
-    light: { key: 0x00d4ff, fill: 0xff6a00, ki: 2.5, fi: 2.0 },
+    light: { key: 0x00d4ff, fill: 0xff6a00, ki: 2.0, fi: 1.5 },
   },
   {
+    // Section 1: Core Specs — Mid shot, angled right
+    section: "specs",
+    modelRot: 0.8,
+    from: { x: 2.0, y: 0.5, z: 9.5, fov: 46 },
+    to:   { x: 1.0, y: 1.5, z: 8.0, fov: 42 },
+    lookAt: new THREE.Vector3(-1.0, 1.0, 0),
+    light: { key: 0x00aaff, fill: 0x4488ff, ki: 2.8, fi: 1.2 },
+  },
+  {
+    // Section 2: Neural Link — Close-up head/chest area
     section: "neural",
-    modelRot: 3.5, // Rotate model to show back
-    from: { x: -4.5, y: -1.0, z: 10.0, fov: 44 }, // Cinematic sweep from the side-back
-    to: { x: -2.0, y: 1.5, z: 7.5, fov: 38 },     // Close up on the back reactor/shoulder area
-    lookAt: new THREE.Vector3(-2.0, 1.2, 0),      // Look at the upper back/shoulder
+    modelRot: 3.5,
+    from: { x: -4.5, y: -1.0, z: 10.0, fov: 44 },
+    to:   { x: -2.0, y: 1.5, z: 7.5, fov: 38 },
+    lookAt: new THREE.Vector3(-2.0, 1.2, 0),
     light: { key: 0x0088ff, fill: 0x3366ff, ki: 3.5, fi: 1.5 },
   },
   {
-    section: "vortex",
+    // Section 3: Arsenal — Focus on arms/weapons, dramatic orange
+    section: "arsenal",
     modelRot: 0.6,
     from: { x: -3.0, y: 0.0, z: 7.5, fov: 52 },
-    to: { x: -1.5, y: 0.8, z: 5.5, fov: 46 },
+    to:   { x: -1.5, y: 0.8, z: 5.5, fov: 46 },
     lookAt: new THREE.Vector3(-2.0, 1.5, 0),
     light: { key: 0xff3300, fill: 0xff8800, ki: 1.8, fi: 3.5 },
   },
   {
-    section: "deploy",
+    // Section 4: Deployment Map — Top-down tactical view
+    section: "deployment-map",
+    modelRot: 1.2,
+    from: { x: 0.0, y: 5.0, z: 8.0, fov: 40 },
+    to:   { x: -1.0, y: 3.5, z: 9.0, fov: 44 },
+    lookAt: new THREE.Vector3(-2.0, 0.5, 0),
+    light: { key: 0x00ffaa, fill: 0x00aaff, ki: 2.0, fi: 1.0 },
+  },
+  {
+    // Section 5: Tech Stack — Side sweep, showing full silhouette
+    section: "tech-stack",
+    modelRot: -0.8,
+    from: { x: 3.5, y: 1.0, z: 8.5, fov: 42 },
+    to:   { x: 2.0, y: 0.5, z: 9.5, fov: 46 },
+    lookAt: new THREE.Vector3(-1.5, 0.8, 0),
+    light: { key: 0x00d4ff, fill: 0x0066ff, ki: 2.5, fi: 1.8 },
+  },
+  {
+    // Section 6: Pilots — Portrait close-up, warm tones
+    section: "pilots",
+    modelRot: 0.3,
+    from: { x: -1.0, y: 0.5, z: 9.0, fov: 44 },
+    to:   { x: 0.0, y: 1.5, z: 8.0, fov: 40 },
+    lookAt: new THREE.Vector3(-1.5, 1.0, 0),
+    light: { key: 0x4488ff, fill: 0xff6600, ki: 2.2, fi: 2.0 },
+  },
+  {
+    // Section 7: CTA / Deploy — Grand pull-back reveal
+    section: "cta",
     modelRot: 0.0,
     from: { x: 0.0, y: 4.0, z: 5.5, fov: 36 },
-    to: { x: 0.0, y: 1.5, z: 9.5, fov: 44 },
+    to:   { x: 0.0, y: 1.5, z: 10.0, fov: 46 },
     lookAt: new THREE.Vector3(-1.5, 0.8, 0),
     light: { key: 0x00ffaa, fill: 0x00aaff, ki: 2.8, fi: 1.4 },
   },
 ];
 
-// ========== SMOKE PARTICLE SYSTEM ==========
-const PARTICLE_COUNT = 250;
+// ================================================================
+//  EMBER PARTICLE SYSTEM
+// ================================================================
+const PARTICLE_COUNT = 300;
 const smokeGeometry = new THREE.BufferGeometry();
 const smokePositions = new Float32Array(PARTICLE_COUNT * 3);
 const smokeSizes = new Float32Array(PARTICLE_COUNT);
 const smokeOpacities = new Float32Array(PARTICLE_COUNT);
-const smokeLifetimes = new Float32Array(PARTICLE_COUNT); // 0→1 lifecycle
+const smokeLifetimes = new Float32Array(PARTICLE_COUNT);
 const smokeSpeeds = new Float32Array(PARTICLE_COUNT);
+const smokeColors = new Float32Array(PARTICLE_COUNT * 3);
 
 function initParticle(i) {
-  // Spread around model center (-3, -11, 0) in a wide cylinder
   const angle = Math.random() * Math.PI * 2;
-  const radius = 1.5 + Math.random() * 10;
+  const radius = 1.5 + Math.random() * 12;
   smokePositions[i * 3] = -3 + Math.cos(angle) * radius;
-  smokePositions[i * 3 + 1] = -11 + Math.random() * 14 - 3; // -14 to +0
+  smokePositions[i * 3 + 1] = -11 + Math.random() * 16 - 4;
   smokePositions[i * 3 + 2] = Math.sin(angle) * radius;
 
-  smokeSizes[i] = 20 + Math.random() * 50;
+  smokeSizes[i] = 15 + Math.random() * 40;
   smokeOpacities[i] = 0.0;
-  smokeLifetimes[i] = Math.random(); // random start phase
-  smokeSpeeds[i] = 0.002 + Math.random() * 0.006;
+  smokeLifetimes[i] = Math.random();
+  smokeSpeeds[i] = 0.002 + Math.random() * 0.005;
+
+  // Mix between cyan and orange embers
+  const colorChoice = Math.random();
+  if (colorChoice < 0.4) {
+    // Cyan
+    smokeColors[i * 3] = 0.3;
+    smokeColors[i * 3 + 1] = 0.8;
+    smokeColors[i * 3 + 2] = 1.0;
+  } else if (colorChoice < 0.7) {
+    // Orange ember
+    smokeColors[i * 3] = 1.0;
+    smokeColors[i * 3 + 1] = 0.45;
+    smokeColors[i * 3 + 2] = 0.1;
+  } else {
+    // White-blue
+    smokeColors[i * 3] = 0.6;
+    smokeColors[i * 3 + 1] = 0.7;
+    smokeColors[i * 3 + 2] = 0.9;
+  }
 }
 
 for (let i = 0; i < PARTICLE_COUNT; i++) {
@@ -111,13 +202,17 @@ for (let i = 0; i < PARTICLE_COUNT; i++) {
 smokeGeometry.setAttribute("position", new THREE.BufferAttribute(smokePositions, 3));
 smokeGeometry.setAttribute("aSize", new THREE.BufferAttribute(smokeSizes, 1));
 smokeGeometry.setAttribute("aOpacity", new THREE.BufferAttribute(smokeOpacities, 1));
+smokeGeometry.setAttribute("aColor", new THREE.BufferAttribute(smokeColors, 3));
 
 const smokeVertexShader = `
   attribute float aSize;
   attribute float aOpacity;
+  attribute vec3 aColor;
   varying float vOpacity;
+  varying vec3 vColor;
   void main() {
     vOpacity = aOpacity;
+    vColor = aColor;
     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
     gl_PointSize = aSize * (300.0 / -mvPosition.z);
     gl_Position = projectionMatrix * mvPosition;
@@ -126,13 +221,12 @@ const smokeVertexShader = `
 
 const smokeFragmentShader = `
   varying float vOpacity;
+  varying vec3 vColor;
   void main() {
-    // Soft circular particle
     float dist = length(gl_PointCoord - vec2(0.5));
     if (dist > 0.5) discard;
-    // Soft edge falloff (gaussian-like)
     float alpha = smoothstep(0.5, 0.05, dist) * vOpacity;
-    gl_FragColor = vec4(0.6, 0.7, 0.8, alpha);
+    gl_FragColor = vec4(vColor, alpha);
   }
 `;
 
@@ -147,25 +241,42 @@ const smokeMaterial = new THREE.ShaderMaterial({
 const smokeParticles = new THREE.Points(smokeGeometry, smokeMaterial);
 scene.add(smokeParticles);
 
-// ========== THREE STATE ==========
+// ================================================================
+//  THREE STATE
+// ================================================================
 let model, walkAction, mixer;
 const clock = new THREE.Clock();
 const loader = new GLTFLoader();
 
 const WALK_DURATION = 3.3;
-const TOTAL_SECTIONS = SHOTS.length; // 4
+const TOTAL_SECTIONS = SHOTS.length; // 8
 
-// globalProgress: 0 → 1 over the whole page, driven by smooth scroll system
-let globalProgress = 0; // what render reads (smoothed)
-let targetProgress = 0; // what scroll system writes
+let globalProgress = 0;
+let targetProgress = 0;
 
 const camPos = new THREE.Vector3(0.5, -1.5, 16.0);
 const camLookAt = new THREE.Vector3(-2.0, 0.5, 0);
 let modelRotCurrent = SHOTS[0].modelRot;
 let idleTime = 0;
-let prevProgress = 0; // for detecting scroll velocity
+let prevProgress = 0;
 
-// ========== LOAD MODEL ==========
+// Mouse parallax state
+let mouseX = 0;
+let mouseY = 0;
+let targetMouseX = 0;
+let targetMouseY = 0;
+
+// ================================================================
+//  MOUSE FOLLOW PARALLAX
+// ================================================================
+window.addEventListener("mousemove", (e) => {
+  targetMouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+  targetMouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+});
+
+// ================================================================
+//  LOAD MODEL
+// ================================================================
 loader.load(
   "model/gipsy_danger_animated.glb",
   (gltf) => {
@@ -185,14 +296,20 @@ loader.load(
 
     setTimeout(
       () => document.getElementById("loader").classList.add("hidden"),
-      500,
+      600,
     );
 
     initSmoothScroll();
+    initWeaponHotspots();
+    initMagneticButton();
   },
   (xhr) => {
-    if (xhr.total)
-      console.log(`${Math.round((xhr.loaded / xhr.total) * 100)}%`);
+    if (xhr.total) {
+      const pct = Math.round((xhr.loaded / xhr.total) * 100);
+      console.log(`${pct}%`);
+      const fill = document.querySelector(".loader-bar-fill");
+      if (fill) fill.style.width = `${pct}%`;
+    }
   },
   (err) => {
     console.error(err);
@@ -200,12 +317,14 @@ loader.load(
   },
 );
 
-// ========== SMOOTH SCROLL SYSTEM =============================================
+// ================================================================
+//  SMOOTH SCROLL SYSTEM
+// ================================================================
 function initSmoothScroll() {
-  const LOCK_DURATION = 500;
-  const SCROLL_SPEED = 0.0025;
-  const LERP_NORMAL = 0.12;
-  const LERP_LOCKED = 0.18;
+  const LOCK_DURATION = 450;
+  const SCROLL_SPEED = 0.002;
+  const LERP_NORMAL = 0.10;
+  const LERP_LOCKED = 0.16;
   const LOCK_THRESHOLD = 0.06;
 
   let rawY = 0;
@@ -215,7 +334,7 @@ function initSmoothScroll() {
   let lockTimer = null;
   let touchStartY = 0;
 
-  const snapPoints = [0, 1, 2, 3, 4];
+  const snapPoints = Array.from({ length: TOTAL_SECTIONS + 1 }, (_, i) => i);
 
   function tryLock(newRaw) {
     if (isLocked) return newRaw;
@@ -240,28 +359,24 @@ function initSmoothScroll() {
 
   function addDelta(delta) {
     if (isLocked) return;
-
     rawY = Math.max(0, Math.min(TOTAL_SECTIONS, rawY + delta));
     rawY = tryLock(rawY);
   }
 
-  // --- Wheel ---
+  // Wheel
   window.addEventListener(
     "wheel",
     (e) => {
       e.preventDefault();
-      const delta = e.deltaY * SCROLL_SPEED;
-      addDelta(delta);
+      addDelta(e.deltaY * SCROLL_SPEED);
     },
     { passive: false },
   );
 
-  // --- Touch ---
+  // Touch
   window.addEventListener(
     "touchstart",
-    (e) => {
-      touchStartY = e.touches[0].clientY;
-    },
+    (e) => { touchStartY = e.touches[0].clientY; },
     { passive: true },
   );
 
@@ -276,20 +391,20 @@ function initSmoothScroll() {
     { passive: false },
   );
 
-  // --- Keyboard ---
+  // Keyboard
   window.addEventListener("keydown", (e) => {
     if (e.key === "ArrowDown" || e.key === "PageDown") addDelta(0.25);
     if (e.key === "ArrowUp" || e.key === "PageUp") addDelta(-0.25);
   });
 
-  // --- Navigate to a section ---
+  // Navigate to section
   window.gotoSection = function (idx) {
     isLocked = false;
     clearTimeout(lockTimer);
     rawY = Math.max(0, Math.min(TOTAL_SECTIONS, idx));
   };
 
-  // Dot clicks
+  // Dot & nav-link clicks
   document.querySelectorAll("[data-goto]").forEach((el) => {
     el.addEventListener("click", (e) => {
       e.preventDefault();
@@ -297,7 +412,10 @@ function initSmoothScroll() {
     });
   });
 
-  // --- GSAP ticker ---
+  // GSAP ticker
+  const countersDone = new Set();
+  const progressBarsDone = new Set();
+
   gsap.ticker.add(() => {
     const lerpF = isLocked ? LERP_LOCKED : LERP_NORMAL;
     displayY = lerp(displayY, rawY, lerpF);
@@ -305,50 +423,194 @@ function initSmoothScroll() {
     const clamped = Math.max(0, Math.min(TOTAL_SECTIONS, displayY));
     targetProgress = clamped / TOTAL_SECTIONS;
 
+    // Progress bar
     const bar = document.getElementById("scroll-progress");
     if (bar) bar.style.width = `${(clamped / TOTAL_SECTIONS) * 100}%`;
 
+    // Active dot
     const activeIdx = Math.round(Math.min(clamped, TOTAL_SECTIONS - 1));
     document.querySelectorAll("#section-dots .dot").forEach((dot, i) => {
       dot.classList.toggle("active", i === activeIdx);
     });
 
-    updateSectionVisibility(clamped);
+    updateSectionVisibility(clamped, countersDone, progressBarsDone);
   });
 
   // Show hero immediately
   setTimeout(() => {
     document.getElementById("hero-content")?.classList.add("visible");
+    triggerScramble(document.querySelector("#hero-content .scramble-text"));
   }, 800);
-
-  // Stat counters
-  const countersDone = new Set();
-  function updateSectionVisibility(y) {
-    const activeSection = Math.min(Math.floor(y + 0.15), TOTAL_SECTIONS - 1);
-
-    document.querySelectorAll("section").forEach((sec, i) => {
-      const content = sec.querySelector(".content");
-      if (!content) return;
-      if (i === activeSection) {
-        content.classList.add("visible");
-      } else {
-        content.classList.remove("visible");
-      }
-    });
-
-    document.querySelectorAll(".stat-value[data-count]").forEach((el) => {
-      const secIdx = parseInt(
-        el.closest("section")?.dataset?.sectionIndex ?? "-1",
-      );
-      if (secIdx === activeSection && !countersDone.has(el)) {
-        countersDone.add(el);
-        animateCounter(el, parseFloat(el.dataset.count));
-      }
-    });
-  }
 }
 
-// ========== CAMERA MATH (CINEMATIC) =========================================
+// ================================================================
+//  SECTION VISIBILITY & COUNTER TRIGGERS
+// ================================================================
+function updateSectionVisibility(y, countersDone, progressBarsDone) {
+  const activeSection = Math.min(Math.floor(y + 0.15), TOTAL_SECTIONS - 1);
+
+  document.querySelectorAll("section").forEach((sec, i) => {
+    const content = sec.querySelector(".content");
+    if (!content) return;
+    if (i === activeSection) {
+      if (!content.classList.contains("visible")) {
+        content.classList.add("visible");
+        // Trigger scramble text
+        content.querySelectorAll(".scramble-text").forEach((el) => {
+          triggerScramble(el);
+        });
+      }
+    } else {
+      content.classList.remove("visible");
+    }
+  });
+
+  // Animate counters
+  document.querySelectorAll("[data-count]").forEach((el) => {
+    const secIdx = parseInt(el.closest("section")?.dataset?.sectionIndex ?? "-1");
+    if (secIdx === activeSection && !countersDone.has(el)) {
+      countersDone.add(el);
+      animateCounter(el, parseFloat(el.dataset.count));
+    }
+  });
+
+  // Animate progress bars
+  document.querySelectorAll(".progress-fill[data-width]").forEach((el) => {
+    const secIdx = parseInt(el.closest("section")?.dataset?.sectionIndex ?? "-1");
+    if (secIdx === activeSection && !progressBarsDone.has(el)) {
+      progressBarsDone.add(el);
+      el.style.setProperty("--fill-width", `${el.dataset.width}%`);
+      // Force reflow then apply
+      requestAnimationFrame(() => {
+        el.style.width = `${el.dataset.width}%`;
+      });
+    }
+  });
+}
+
+// ================================================================
+//  TEXT SCRAMBLE ANIMATION
+// ================================================================
+const scrambleChars = "!@#$%^&*()_+-={}[]|;:,.<>?/~`01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+const scrambleDone = new Set();
+
+function triggerScramble(el) {
+  if (!el || scrambleDone.has(el)) return;
+  scrambleDone.add(el);
+
+  const finalText = el.dataset.final || el.textContent;
+  const duration = 800;
+  const start = performance.now();
+
+  function tick(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const revealCount = Math.floor(progress * finalText.length);
+
+    let display = "";
+    for (let i = 0; i < finalText.length; i++) {
+      if (i < revealCount) {
+        display += finalText[i];
+      } else if (finalText[i] === " " || finalText[i] === "\n") {
+        display += finalText[i];
+      } else {
+        display += scrambleChars[Math.floor(Math.random() * scrambleChars.length)];
+      }
+    }
+
+    el.textContent = display;
+
+    if (progress < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      el.textContent = finalText;
+    }
+  }
+
+  requestAnimationFrame(tick);
+}
+
+// ================================================================
+//  WEAPON HOTSPOT INTERACTION
+// ================================================================
+const WEAPONS = {
+  plasma: {
+    name: "I-19 PLASMACASTER",
+    class: "CLASS-A",
+    damage: 95,
+    fireRate: 60,
+    range: 82,
+  },
+  sword: {
+    name: "GD-6 CHAIN SWORD",
+    class: "CLASS-S",
+    damage: 100,
+    fireRate: 40,
+    range: 30,
+  },
+  missile: {
+    name: "ANTI-KAIJU MISSILES",
+    class: "CLASS-B",
+    damage: 80,
+    fireRate: 75,
+    range: 95,
+  },
+};
+
+function initWeaponHotspots() {
+  const buttons = document.querySelectorAll(".hotspot-btn");
+  const detailPanel = document.getElementById("weapon-detail");
+
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      buttons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      const weaponKey = btn.dataset.weapon;
+      const weapon = WEAPONS[weaponKey];
+      if (!weapon || !detailPanel) return;
+
+      // Update panel
+      detailPanel.querySelector(".weapon-name").textContent = weapon.name;
+      detailPanel.querySelector(".weapon-class").textContent = weapon.class;
+
+      const fills = detailPanel.querySelectorAll(".progress-fill");
+      const values = [weapon.damage, weapon.fireRate, weapon.range];
+      fills.forEach((fill, i) => {
+        fill.style.width = "0%";
+        requestAnimationFrame(() => {
+          fill.style.width = `${values[i]}%`;
+        });
+      });
+
+      // GSAP flash
+      gsap.fromTo(detailPanel, { opacity: 0.3, y: 8 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" });
+    });
+  });
+}
+
+// ================================================================
+//  MAGNETIC CTA BUTTON
+// ================================================================
+function initMagneticButton() {
+  const btn = document.getElementById("cta-btn");
+  if (!btn) return;
+
+  btn.addEventListener("mousemove", (e) => {
+    const rect = btn.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    btn.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px)`;
+  });
+
+  btn.addEventListener("mouseleave", () => {
+    btn.style.transform = "translate(0, 0)";
+  });
+}
+
+// ================================================================
+//  CAMERA MATH (CINEMATIC)
+// ================================================================
 function getCameraState(progress) {
   const shotFloat = progress * TOTAL_SECTIONS;
   const idxA = Math.min(Math.floor(shotFloat), SHOTS.length - 1);
@@ -358,7 +620,6 @@ function getCameraState(progress) {
   const shotA = SHOTS[idxA];
   const shotB = SHOTS[idxB];
 
-  // Within-shot eased progress
   const sectionT = quinticEaseInOut(shotFloat % 1);
 
   function dolly(shot) {
@@ -394,44 +655,67 @@ function getCameraState(progress) {
   };
 }
 
-// ========== COUNTER ANIMATION ==========
+// ================================================================
+//  COUNTER ANIMATION
+// ================================================================
 function animateCounter(el, target) {
   const isFloat = target % 1 !== 0;
   const start = performance.now();
   function tick(now) {
     const p = Math.min((now - start) / 1500, 1);
     const e = 1 - Math.pow(1 - p, 3);
-    el.textContent = isFloat ? (e * target).toFixed(1) : Math.round(e * target);
+    el.textContent = isFloat
+      ? (e * target).toFixed(1)
+      : Math.round(e * target);
     if (p < 1) requestAnimationFrame(tick);
     else el.textContent = isFloat ? target.toFixed(1) : target;
   }
   requestAnimationFrame(tick);
 }
 
-// ========== RESIZE ==========
+// ================================================================
+//  RESIZE + DYNAMIC FOV
+// ================================================================
 window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+  const aspect = window.innerWidth / window.innerHeight;
+  camera.aspect = aspect;
+
+  // Dynamic FOV for mobile vs desktop
+  if (aspect < 1) {
+    camera.fov = 65;
+  } else if (aspect < 1.4) {
+    camera.fov = 52;
+  } else {
+    camera.fov = 45;
+  }
+
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// ========== MATH UTILS (CINEMATIC EASING) ==========
+// Trigger initial FOV
+if (window.innerWidth / window.innerHeight < 1) {
+  camera.fov = 65;
+} else if (window.innerWidth / window.innerHeight < 1.4) {
+  camera.fov = 52;
+}
+camera.updateProjectionMatrix();
+
+// ================================================================
+//  MATH UTILITIES
+// ================================================================
 function lerp(a, b, t) {
   return a + (b - a) * t;
 }
 
-// Quintic smoothstep — much smoother than cubic
 function quinticSmooth(t) {
   t = Math.max(0, Math.min(1, t));
   return t * t * t * (t * (t * 6 - 15) + 10);
 }
 
-// Quintic ease-in-out — ultra smooth transitions
 function quinticEaseInOut(t) {
   t = Math.max(0, Math.min(1, t));
-  if (t < 0.5) {
-    return 16 * t * t * t * t * t;
-  }
+  if (t < 0.5) return 16 * t * t * t * t * t;
   const f = 2 * t - 2;
   return 0.5 * f * f * f * f * f + 1;
 }
@@ -440,28 +724,29 @@ function lerpColor(hexA, hexB, t) {
   return new THREE.Color(hexA).lerp(new THREE.Color(hexB), t);
 }
 
-// ========== SMOKE PARTICLE UPDATE ==========
+// ================================================================
+//  EMBER PARTICLE UPDATE
+// ================================================================
 function updateSmokeParticles(delta, scrollVelocity) {
   const positions = smokeGeometry.attributes.position.array;
   const opacities = smokeGeometry.attributes.aOpacity.array;
   const sizes = smokeGeometry.attributes.aSize.array;
 
-  // Boost particle visibility during transitions
-  const velocityBoost = Math.min(Math.abs(scrollVelocity) * 8, 1.0);
+  const velocityBoost = Math.min(Math.abs(scrollVelocity) * 10, 1.0);
+  // Scroll direction — positive = scrolling down, negative = up
+  const scrollDir = Math.sign(scrollVelocity);
 
   for (let i = 0; i < PARTICLE_COUNT; i++) {
-    // Advance lifetime
     smokeLifetimes[i] += smokeSpeeds[i];
 
     if (smokeLifetimes[i] > 1.0) {
-      // Reset particle
       initParticle(i);
       smokeLifetimes[i] = 0;
     }
 
     const life = smokeLifetimes[i];
 
-    // Fade in (0→0.15), sustain (0.15→0.7), fade out (0.7→1.0)
+    // Opacity lifecycle
     let opacity;
     if (life < 0.15) {
       opacity = quinticSmooth(life / 0.15);
@@ -471,17 +756,19 @@ function updateSmokeParticles(delta, scrollVelocity) {
       opacity = 1.0 - quinticSmooth((life - 0.7) / 0.3);
     }
 
-    // Thicker smoke for cinematic feel + extra boost during scroll
-    const baseOpacity = 0.06 + velocityBoost * 0.1;
+    const baseOpacity = 0.05 + velocityBoost * 0.12;
     opacities[i] = opacity * baseOpacity;
 
-    // Slow drift upward + subtle horizontal sway
-    positions[i * 3 + 1] += delta * (0.15 + smokeSpeeds[i] * 15); // up
-    positions[i * 3] += Math.sin(idleTime * 0.3 + i * 0.5) * delta * 0.08; // sway X
-    positions[i * 3 + 2] += Math.cos(idleTime * 0.2 + i * 0.7) * delta * 0.06; // sway Z
+    // Movement — embers drift up, react to scroll direction
+    const driftUp = delta * (0.12 + smokeSpeeds[i] * 12);
+    const scrollReaction = scrollDir * velocityBoost * delta * 3.0;
 
-    // Grow slightly over lifetime
-    sizes[i] = smokeSizes[i] * (0.6 + life * 0.6);
+    positions[i * 3 + 1] += driftUp + scrollReaction;
+    positions[i * 3] += Math.sin(idleTime * 0.3 + i * 0.5) * delta * 0.06;
+    positions[i * 3 + 2] += Math.cos(idleTime * 0.2 + i * 0.7) * delta * 0.05;
+
+    // Grow
+    sizes[i] = smokeSizes[i] * (0.5 + life * 0.7);
   }
 
   smokeGeometry.attributes.position.needsUpdate = true;
@@ -489,17 +776,19 @@ function updateSmokeParticles(delta, scrollVelocity) {
   smokeGeometry.attributes.aSize.needsUpdate = true;
 }
 
-// ========== RENDER LOOP ==========
+// ================================================================
+//  RENDER LOOP
+// ================================================================
 function animate() {
   requestAnimationFrame(animate);
 
   const delta = clock.getDelta();
   idleTime += delta;
 
-  // Smooth global progress — lower lerp for ultra-smooth cinematic feel
-  globalProgress = lerp(globalProgress, targetProgress, 0.065);
+  // Smooth progress
+  globalProgress = lerp(globalProgress, targetProgress, 0.06);
 
-  // Calculate scroll velocity for particle boost
+  // Scroll velocity
   const scrollVelocity = globalProgress - prevProgress;
   prevProgress = globalProgress;
 
@@ -510,34 +799,44 @@ function animate() {
     mixer.update(0);
   }
 
-  // Camera — cinematic smooth
+  // Mouse parallax smoothing
+  mouseX = lerp(mouseX, targetMouseX, 0.05);
+  mouseY = lerp(mouseY, targetMouseY, 0.05);
+
+  // Camera
   const cam = getCameraState(globalProgress);
-  const CAM_LERP = 0.045; // slower = smoother
+  const CAM_LERP = 0.04;
 
-  // Cinematic camera sway (handheld feel)
-  const swayX = Math.sin(idleTime * 0.4) * 0.03 + Math.sin(idleTime * 0.7) * 0.015;
-  const swayY = Math.cos(idleTime * 0.3) * 0.025 + Math.sin(idleTime * 0.55) * 0.01;
+  // Camera shake — enhanced during transitions
+  const shakeIntensity = 1.0 + Math.min(Math.abs(scrollVelocity) * 60, 2.0);
+  const swayX = (Math.sin(idleTime * 0.4) * 0.025 + Math.sin(idleTime * 0.7) * 0.012) * shakeIntensity;
+  const swayY = (Math.cos(idleTime * 0.3) * 0.02 + Math.sin(idleTime * 0.55) * 0.008) * shakeIntensity;
 
-  camPos.x = lerp(camPos.x, cam.x + swayX, CAM_LERP);
-  camPos.y = lerp(camPos.y, cam.y + swayY, CAM_LERP);
+  // Mouse parallax offset on camera
+  const mouseOffsetX = mouseX * 0.15;
+  const mouseOffsetY = mouseY * 0.08;
+
+  camPos.x = lerp(camPos.x, cam.x + swayX + mouseOffsetX, CAM_LERP);
+  camPos.y = lerp(camPos.y, cam.y + swayY - mouseOffsetY, CAM_LERP);
   camPos.z = lerp(camPos.z, cam.z, CAM_LERP);
 
   camLookAt.lerp(cam.lookAt, CAM_LERP * 0.8);
 
-  // FOV breathing — subtle pulsing for cinematic depth
+  // FOV breathing — stronger during section transitions
   const fovBreath = Math.sin(idleTime * 0.25) * 0.3;
   camera.fov = lerp(camera.fov, cam.fov + fovBreath, CAM_LERP * 0.4);
   camera.updateProjectionMatrix();
   camera.position.copy(camPos);
   camera.lookAt(camLookAt);
 
-  // Model rotation — smooth clockwise
+  // Model rotation — smooth + mouse follow
   modelRotCurrent = lerp(modelRotCurrent, cam.modelRot, 0.03);
 
   if (model) {
     const breathY = Math.sin(idleTime * 1.1) * 0.015;
     const breathRot = Math.sin(idleTime * 0.6) * 0.005;
-    model.rotation.y = modelRotCurrent + breathRot;
+    const mouseModelRot = mouseX * 0.04; // Subtle model follow toward cursor
+    model.rotation.y = modelRotCurrent + breathRot + mouseModelRot;
     model.position.y = -11 + breathY;
     model.position.x = -3;
   }
@@ -549,7 +848,11 @@ function animate() {
   fillLight.intensity = lerp(fillLight.intensity, cam.light.fi, ML);
   fillLight.color.lerp(cam.light.fill, ML);
 
-  // Update smoke particles
+  // God ray breathing
+  const godRayBreath = 0.01 + Math.sin(idleTime * 0.5) * 0.005;
+  coneMat.opacity = lerp(coneMat.opacity, godRayBreath, 0.02);
+
+  // Update particles
   updateSmokeParticles(delta, scrollVelocity);
 
   renderer.render(scene, camera);
